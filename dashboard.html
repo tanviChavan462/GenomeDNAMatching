@@ -1,809 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AMR Genome Screening - Parallel HPC Interactive Dashboard</title>
-  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
-  <style>
-    .metric-card {
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-    .metric-card:hover {
-      transform: translateY(-2px);
-    }
-    .tab-btn.active {
-      background-color: var(--primary, #2563eb);
-      color: #ffffff;
-    }
-    .mode-btn.active {
-      background-color: #3b82f6;
-      color: #ffffff;
-      border-color: #60a5fa;
-    }
-    .size-btn.active {
-      background-color: #10b981;
-      color: #ffffff;
-      border-color: #34d399;
-    }
-    .thread-btn.active {
-      background-color: #8b5cf6;
-      color: #ffffff;
-      border-color: #a78bfa;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resistance Gene Checker</title>
+<style>
+  :root{--ink:#1d232b;--muted:#6b7480;--line:#e4e7eb;--bg:#fcfcfd;--soft:#f3f5f7;--accent:#0d6a8c;--bad:#b42318;--badbg:#fdf0ef;--good:#18794e;--goodbg:#eaf6ef;--serif:"Iowan Old Style","Palatino Linotype",Georgia,serif}
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1020px;margin:0 auto;padding:44px 24px 80px}
+  header{padding-bottom:26px;border-bottom:1px solid var(--ink)}
+  h1,h2,h3{font-family:var(--serif);font-weight:700;margin:0}
+  h1{font-size:2.4rem;line-height:1.15;letter-spacing:-.01em}
+  h2{font-size:1.25rem;margin-bottom:14px}
+  p{margin:0 0 12px}
+  .lead{color:var(--muted);max-width:58ch;margin:10px 0 24px}
+  .facts{display:flex;gap:44px;flex-wrap:wrap}
+  .facts b{display:block;font:700 1.9rem/1.1 var(--serif)}
+  .facts span{color:var(--muted);font-size:.88rem}
+  .layout{display:grid;grid-template-columns:270px 1fr;gap:56px;margin-top:34px;align-items:start}
+  aside{position:sticky;top:24px}
+  aside label{display:block;font:600 .95rem var(--serif);margin:0 0 4px}
+  aside .field{margin-bottom:18px}
+  aside select{width:100%}
+  .note{color:var(--muted);font-size:.88rem;line-height:1.55}
+  .note b{color:var(--ink)}
+  .tabs{display:flex;gap:26px;border-bottom:1px solid var(--line);margin-bottom:24px}
+  .tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:6px 0 10px;margin-bottom:-1px;color:var(--muted);font:inherit;cursor:pointer}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button.on{color:var(--ink);font-weight:600;border-bottom-color:var(--ink)}
+  button,select,textarea{font:inherit}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .chip{border:1px solid var(--line);background:#fff;color:var(--ink);padding:6px 13px;border-radius:6px;cursor:pointer;font-size:.92rem}
+  .chip:hover{border-color:var(--ink)}
+  textarea{width:100%;min-height:120px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:12px;font:14px/1.5 ui-monospace,Consolas,monospace;resize:vertical}
+  select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+  textarea:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid #9bd0e4;outline-offset:2px}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+  .small{color:var(--muted);font-size:.9rem}
+  .btn{background:var(--ink);color:#fff;border:0;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer}
+  .btn:hover{background:#000}
+  .verdict{margin-top:22px;padding:20px 22px;border-radius:10px;display:none}
+  .verdict.bad{background:var(--badbg);border-left:5px solid var(--bad);display:block}
+  .verdict.good{background:var(--goodbg);border-left:5px solid var(--good);display:block}
+  .verdict.err{background:var(--soft);border-left:5px solid var(--muted);display:block}
+  .verdict h3{font-size:1.45rem;margin-bottom:4px}
+  .verdict.bad h3{color:var(--bad)} .verdict.good h3{color:var(--good)}
+  .meter{height:8px;background:#fff;border-radius:99px;margin:12px 0 6px;overflow:hidden;border:1px solid var(--line)}
+  .meter i{display:block;height:100%;background:var(--accent)}
+  .bars{display:grid;grid-template-columns:84px 1fr 150px;gap:12px;align-items:center}
+  .bars .track{background:var(--soft);border-radius:4px;height:16px}
+  .bars .fill{height:100%;border-radius:4px;background:var(--accent)}
+  .bars .fill.base{background:#a3adb9}
+  .bars .val{font-variant-numeric:tabular-nums;text-align:right;font-size:.92rem}
+  table{width:100%;border-collapse:collapse;font-size:.93rem;font-variant-numeric:tabular-nums}
+  th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600}
+  td small{color:var(--good);font-weight:600}
+  .cmd{background:#1d232b;color:#d9f0e4;border-radius:8px;padding:12px;font:13px/1.5 ui-monospace,Consolas,monospace}
+  .cmd code{display:block;word-break:break-all;margin-bottom:10px}
+  .cmd button{background:#38424f;color:#fff;border:0;border-radius:6px;padding:5px 12px;cursor:pointer}
+  code.i{background:var(--soft);padding:1px 6px;border-radius:4px;font-size:.88em}
+  .scroll{overflow-x:auto}
+  hr{border:0;border-top:1px solid var(--line);margin:22px 0}
+  @media(max-width:800px){.layout{grid-template-columns:1fr;gap:30px}aside{position:static;order:2}h1{font-size:1.9rem}.bars{grid-template-columns:64px 1fr}.bars .val{grid-column:1/-1;text-align:left;margin-bottom:6px}}
+</style>
 </head>
-<body class="bg-[var(--background,#0f172a)] text-[var(--foreground,#f8fafc)] antialiased p-4 md:p-8 min-h-screen">
-  <div class="max-w-7xl mx-auto space-y-6">
+<body>
+<div class="wrap">
 
-    <!-- Header Section -->
-    <header class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div>
-        <div class="flex items-center gap-2 mb-2">
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-            ● Classification Accuracy: 100.0%
-          </span>
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30">
-            OpenMP Multi-Core Scaling
-          </span>
-        </div>
-        <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-[var(--foreground,#ffffff)]">
-          Parallel $k$-mer AMR Screening Dashboard
-        </h1>
-        <p class="text-sm text-[var(--muted-foreground,#94a3b8)] mt-1">
-          Interactive Performance Explorer for Sequential C vs. OpenMP across Scaled Veterinary Genomes
-        </p>
+<header>
+  <h1>Resistance Gene Checker</h1>
+  <p class="lead">Paste bacterial DNA and see whether it carries a gene that makes antibiotics stop working. Fast enough to screen 1,000 genomes in a few milliseconds.</p>
+  <div class="facts">
+    <div><b>100%</b><span>genomes classified correctly</span></div>
+    <div><b>5.5×</b><span>faster with 18 threads</span></div>
+    <div><b>3</b><span>resistance genes checked</span></div>
+    <div><b>1,000</b><span>test genomes</span></div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside>
+    <h2>Run it yourself</h2>
+    <div class="field"><label for="sz">Genomes to check</label>
+      <select id="sz" onchange="cmd()"><option>100</option><option>200</option><option>400</option><option>800</option><option selected>1000</option></select></div>
+    <div class="field"><label for="th">Threads</label>
+      <select id="th" onchange="cmd()"><option>1</option><option>2</option><option>4</option><option>6</option><option selected>8</option><option>12</option><option>16</option><option>18</option></select></div>
+    <div class="cmd"><code id="cmd"></code><button onclick="copyCmd(this)">Copy command</button></div>
+    <p class="note" style="margin-top:10px">Paste it into PowerShell from the project folder.</p>
+    <hr>
+    <p class="note"><b>Match:</b> the share of a gene's 21-letter DNA pieces found in your sequence. At 80% or more, the gene counts as present.</p>
+    <p class="note"><b>Thread:</b> one worker. More threads split the genomes between them so the job finishes sooner.</p>
+    <p class="note"><b>The genes:</b> blaTEM resists penicillin-type antibiotics, tetA resists tetracyclines, sul1 resists sulfonamides.</p>
+  </aside>
+
+  <main>
+    <div class="tabs" role="tablist">
+      <button id="t-check" class="on" onclick="tab('check')">Check a sequence</button>
+      <button id="t-speed" onclick="tab('speed')">Speed</button>
+      <button id="t-files" onclick="tab('files')">Files and options</button>
+    </div>
+
+    <section id="p-check">
+      <h2>Check a sequence</h2>
+      <p class="small">Pick an example, or paste your own DNA (letters A, C, G, T).</p>
+      <div class="chips">
+        <button class="chip" onclick="loadPreset('blaTEM')">Example with blaTEM</button>
+        <button class="chip" onclick="loadPreset('tetA')">Example with tetA</button>
+        <button class="chip" onclick="loadPreset('sul1')">Example with sul1</button>
+        <button class="chip" onclick="loadPreset('clean')">Example with no gene</button>
       </div>
-      <div class="flex items-center gap-3">
-        <a href="#input-guide" onclick="switchTab('guide')" class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition">
-          📖 Input Guide
-        </a>
-        <a href="#simulator" onclick="switchTab('simulator')" class="px-4 py-2 text-sm font-semibold rounded-lg bg-[var(--primary,#3b82f6)] text-white hover:opacity-90 transition">
-          🧬 Test DNA Screener
-        </a>
+      <textarea id="dna" placeholder="Paste DNA here, for example ATGAGTATTCAACATTTCCG..." aria-label="DNA sequence"></textarea>
+      <div class="row">
+        <span class="small" id="len">0 letters entered</span>
+        <button class="btn" onclick="screen()">Check this sequence</button>
       </div>
-    </header>
-
-    <!-- SECTION 1: INTERACTIVE RUN CONFIGURATOR & RESULTS VIEWER -->
-    <section class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-6 shadow-sm space-y-6">
-      <div class="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-slate-700/60 gap-2">
-        <div>
-          <h2 class="text-lg font-bold text-white flex items-center gap-2">
-            <span>⚙️</span> Interactive Execution Configurator
-          </h2>
-          <p class="text-xs text-[var(--muted-foreground,#94a3b8)]">
-            Select execution mode, dataset size, and thread count to view the exact command, execution time, speedup, and efficiency.
-          </p>
-        </div>
-        <span class="text-xs px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
-          Live Real-Data Engine
-        </span>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <!-- Controls Column (Left 2 cols) -->
-        <div class="lg:col-span-2 space-y-5">
-          
-          <!-- Control 1: Execution Mode -->
-          <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-              1. Execution Mode
-            </label>
-            <div class="grid grid-cols-2 gap-3">
-              <button onclick="setMode('seq')" id="mode-btn-seq" class="mode-btn border border-slate-700 bg-slate-900/60 hover:bg-slate-800 p-3 rounded-xl text-left transition">
-                <div class="font-bold text-sm text-slate-100 flex items-center gap-2">
-                  <span>💻</span> Sequential C Baseline
-                </div>
-                <div class="text-xs text-slate-400 mt-1">Single CPU core (kmer_sequential.exe)</div>
-              </button>
-              <button onclick="setMode('omp')" id="mode-btn-omp" class="mode-btn active border border-blue-500 bg-blue-600 p-3 rounded-xl text-left transition">
-                <div class="font-bold text-sm text-white flex items-center gap-2">
-                  <span>⚡</span> Parallel OpenMP
-                </div>
-                <div class="text-xs text-blue-100 mt-1">Multi-threaded (kmer_openmp.exe)</div>
-              </button>
-            </div>
-          </div>
-
-          <!-- Control 2: Dataset Size -->
-          <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-              2. Dataset Size (Scaled Genomes)
-            </label>
-            <div class="grid grid-cols-5 gap-2">
-              <button onclick="setSize(100)" id="size-btn-100" class="size-btn border border-slate-700 bg-slate-900/60 p-2.5 rounded-lg text-center transition">
-                <div class="font-bold text-xs text-slate-200">100</div>
-                <div class="text-[11px] text-slate-400">amr_100</div>
-              </button>
-              <button onclick="setSize(200)" id="size-btn-200" class="size-btn border border-slate-700 bg-slate-900/60 p-2.5 rounded-lg text-center transition">
-                <div class="font-bold text-xs text-slate-200">200</div>
-                <div class="text-[11px] text-slate-400">amr_200</div>
-              </button>
-              <button onclick="setSize(400)" id="size-btn-400" class="size-btn border border-slate-700 bg-slate-900/60 p-2.5 rounded-lg text-center transition">
-                <div class="font-bold text-xs text-slate-200">400</div>
-                <div class="text-[11px] text-slate-400">amr_400</div>
-              </button>
-              <button onclick="setSize(800)" id="size-btn-800" class="size-btn border border-slate-700 bg-slate-900/60 p-2.5 rounded-lg text-center transition">
-                <div class="font-bold text-xs text-slate-200">800</div>
-                <div class="text-[11px] text-slate-400">amr_800</div>
-              </button>
-              <button onclick="setSize(1000)" id="size-btn-1000" class="size-btn active border border-emerald-500 bg-emerald-600 p-2.5 rounded-lg text-center transition">
-                <div class="font-bold text-xs text-white">1,000</div>
-                <div class="text-[11px] text-emerald-100">amr_1000</div>
-              </button>
-            </div>
-          </div>
-
-          <!-- Control 3: Thread Count (Disabled in Sequential mode) -->
-          <div id="thread-control-container">
-            <div class="flex justify-between items-center mb-2">
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">
-                3. OpenMP Thread Count
-              </label>
-              <span id="thread-count-label" class="text-xs font-semibold text-purple-400">8 Threads</span>
-            </div>
-            <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
-              <button onclick="setThreads(1)" id="th-btn-1" class="thread-btn border border-slate-700 bg-slate-900/60 p-2 rounded-lg text-xs font-semibold text-slate-300">1T</button>
-              <button onclick="setThreads(2)" id="th-btn-2" class="thread-btn border border-slate-700 bg-slate-900/60 p-2 rounded-lg text-xs font-semibold text-slate-300">2T</button>
-              <button onclick="setThreads(4)" id="th-btn-4" class="thread-btn border border-slate-700 bg-slate-900/60 p-2 rounded-lg text-xs font-semibold text-slate-300">4T</button>
-              <button onclick="setThreads(6)" id="th-btn-6" class="thread-btn border border-slate-700 bg-slate-900/60 p-2 rounded-lg text-xs font-semibold text-slate-300">6T</button>
-              <button onclick="setThreads(8)" id="th-btn-8" class="thread-btn active border border-purple-500 bg-purple-600 p-2 rounded-lg text-xs font-semibold text-white">8T</button>
-              <button onclick="setThreads(12)" id="th-btn-12" class="thread-btn border border-slate-700 bg-slate-900/60 p-2 rounded-lg text-xs font-semibold text-slate-300">12T</button>
-              <button onclick="setThreads(16)" id="th-btn-16" class="thread-btn border border-slate-700 bg-slate-900/60 p-2 rounded-lg text-xs font-semibold text-slate-300">16T</button>
-              <button onclick="setThreads(18)" id="th-btn-18" class="thread-btn border border-slate-700 bg-slate-900/60 p-2 rounded-lg text-xs font-semibold text-slate-300">18T</button>
-            </div>
-          </div>
-
-          <!-- Command Line Box -->
-          <div>
-            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-              Terminal Command to Run This Configuration:
-            </label>
-            <div class="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-xl p-3 font-mono text-xs text-emerald-400 overflow-x-auto">
-              <span id="generated-cmd">.\bin\kmer_openmp.exe -i data/scaled/amr_1000.csv -threads 8 -b 5</span>
-              <button onclick="copyCommand()" class="ml-3 px-2.5 py-1 text-[11px] rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition">
-                Copy
-              </button>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Output Metric Display (Right 1 col) -->
-        <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-5 flex flex-col justify-between space-y-4">
-          <div>
-            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-              <span class="text-xs font-bold uppercase text-slate-400">Measured Outcome</span>
-              <span id="out-badge" class="text-[11px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-semibold">
-                OpenMP Parallel
-              </span>
-            </div>
-
-            <!-- Time Display -->
-            <div class="mt-4">
-              <span class="text-xs text-slate-400 block">Average Screening Time</span>
-              <div class="flex items-baseline gap-2">
-                <span id="out-time" class="text-4xl font-extrabold text-white">5.80</span>
-                <span class="text-sm font-semibold text-slate-400">milliseconds</span>
-              </div>
-            </div>
-
-            <!-- Speedup & Efficiency -->
-            <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-800/80">
-              <div>
-                <span class="text-xs text-slate-400 block">Speedup</span>
-                <span id="out-speedup" class="text-2xl font-bold text-emerald-400">4.55×</span>
-              </div>
-              <div>
-                <span class="text-xs text-slate-400 block">Parallel Efficiency</span>
-                <span id="out-eff" class="text-2xl font-bold text-purple-400">56.9%</span>
-              </div>
-            </div>
-
-            <!-- Work Metrics -->
-            <div class="mt-4 pt-4 border-t border-slate-800/80 space-y-2 text-xs">
-              <div class="flex justify-between">
-                <span class="text-slate-400">Genomes Processed:</span>
-                <span id="out-genomes" class="font-mono text-slate-200 font-bold">1,000</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-slate-400">DNA Bases Scanned:</span>
-                <span id="out-bases" class="font-mono text-slate-200">5,000,000 bp</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-slate-400">Total $k$-mer Lookups:</span>
-                <span id="out-lookups" class="font-mono text-slate-200">4,980,000</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-slate-400">Throughput:</span>
-                <span id="out-throughput" class="font-mono text-blue-400 font-bold">172,414 gen/s</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-slate-400">Accuracy vs Truth:</span>
-                <span class="font-mono text-emerald-400 font-bold">100.00%</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="text-[11px] text-slate-500 bg-slate-900/50 p-2.5 rounded-lg border border-slate-800">
-            📊 Values reflect actual empirical runs recorded in <code class="text-slate-300">results/benchmark_*.csv</code>.
-          </div>
-        </div>
-
-      </div>
+      <div id="verdict" class="verdict" role="status" aria-live="polite"></div>
     </section>
 
-    <!-- SECTION 2: TABS NAVIGATION -->
-    <div class="flex border-b border-[var(--border,#334155)] gap-2 pb-1 overflow-x-auto">
-      <button onclick="switchTab('threads')" id="tab-btn-threads" class="tab-btn active px-4 py-2 rounded-lg text-sm font-semibold transition">
-        Thread Scaling Curves
-      </button>
-      <button onclick="switchTab('comparison')" id="tab-btn-comparison" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold text-[var(--muted-foreground,#94a3b8)] hover:bg-[var(--card,#1e293b)] transition">
-        Full Benchmark Matrix Table
-      </button>
-      <button onclick="switchTab('guide')" id="tab-btn-guide" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold text-[var(--muted-foreground,#94a3b8)] hover:bg-[var(--card,#1e293b)] transition">
-        📖 Input Guide & Schema
-      </button>
-      <button onclick="switchTab('simulator')" id="tab-btn-simulator" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold text-[var(--muted-foreground,#94a3b8)] hover:bg-[var(--card,#1e293b)] transition">
-        🧬 Live DNA Screener
-      </button>
-    </div>
+    <section id="p-speed" hidden>
+      <h2>How much faster is parallel?</h2>
+      <p class="small">Time to check 1,000 genomes. Shorter bars are better.</p>
+      <div class="bars" id="bars"></div>
+      <p class="small" style="margin-top:16px">Gains shrink past about 8 threads: the job is so short that starting the workers takes a noticeable share of the time.</p>
+      <hr>
+      <h2>Different numbers of genomes</h2>
+      <p class="small">Time to finish, and how many times faster than one core.</p>
+      <div class="scroll"><table id="tbl"></table></div>
+    </section>
 
-    <!-- TAB 1: THREAD SCALING CURVES -->
-    <div id="tab-threads" class="space-y-6">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Chart 1: Speedup vs Threads (SVG) -->
-        <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-xl p-6">
-          <h3 class="text-sm font-bold text-slate-200 mb-1">Measured Speedup vs. Ideal Linear Speedup</h3>
-          <p class="text-xs text-slate-400 mb-4">Strong scaling on 1,000 bacterial genomes (amr_1000.csv)</p>
-          <div class="relative w-full h-56">
-            <svg viewBox="0 0 500 220" class="w-full h-full overflow-visible">
-              <line x1="40" y1="20" x2="480" y2="20" stroke="#334155" stroke-dasharray="3,3" />
-              <line x1="40" y1="65" x2="480" y2="65" stroke="#334155" stroke-dasharray="3,3" />
-              <line x1="40" y1="110" x2="480" y2="110" stroke="#334155" stroke-dasharray="3,3" />
-              <line x1="40" y1="155" x2="480" y2="155" stroke="#334155" stroke-dasharray="3,3" />
-              <line x1="40" y1="190" x2="480" y2="190" stroke="#475569" />
-              <text x="35" y="24" fill="#94a3b8" font-size="9" text-anchor="end">6.0x</text>
-              <text x="35" y="114" fill="#94a3b8" font-size="9" text-anchor="end">3.0x</text>
-              <text x="35" y="194" fill="#94a3b8" font-size="9" text-anchor="end">0.0x</text>
-              <!-- Ideal Line -->
-              <path d="M 60 160 L 115 130 L 180 75 L 245 20" fill="none" stroke="#64748b" stroke-dasharray="4,4" stroke-width="1.5" />
-              <!-- Measured Curve (Green) -->
-              <path d="M 60 162 L 115 131 L 180 103 L 245 74 L 305 60 L 365 62 L 425 48 L 470 33"
-                    fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-              <!-- Dots -->
-              <circle cx="60" cy="162" r="4.5" fill="#10b981" />
-              <circle cx="115" cy="131" r="4.5" fill="#10b981" />
-              <circle cx="180" cy="103" r="4.5" fill="#10b981" />
-              <circle cx="245" cy="74" r="4.5" fill="#10b981" />
-              <circle cx="305" cy="60" r="4.5" fill="#10b981" />
-              <circle cx="365" cy="62" r="4.5" fill="#10b981" />
-              <circle cx="425" cy="48" r="4.5" fill="#10b981" />
-              <circle cx="470" cy="33" r="4.5" fill="#10b981" />
-              <!-- Labels -->
-              <text x="60" y="205" fill="#94a3b8" font-size="9" text-anchor="middle">1T</text>
-              <text x="115" y="205" fill="#94a3b8" font-size="9" text-anchor="middle">2T</text>
-              <text x="180" y="205" fill="#94a3b8" font-size="9" text-anchor="middle">4T</text>
-              <text x="245" y="205" fill="#94a3b8" font-size="9" text-anchor="middle">6T</text>
-              <text x="305" y="205" fill="#94a3b8" font-size="9" text-anchor="middle">8T</text>
-              <text x="365" y="205" fill="#94a3b8" font-size="9" text-anchor="middle">12T</text>
-              <text x="425" y="205" fill="#94a3b8" font-size="9" text-anchor="middle">16T</text>
-              <text x="470" y="205" fill="#94a3b8" font-size="9" text-anchor="middle">18T</text>
-            </svg>
-          </div>
-        </div>
+    <section id="p-files" hidden>
+      <h2>What the program needs</h2>
+      <p><b>Genomes</b> (<code class="i">-i</code>): a CSV with one bacterial genome per row and the columns sample_id, species, animal_source, amr_status, amr_gene, sequence, k.</p>
+      <p><b>Reference genes</b> (<code class="i">-r</code>): a FASTA file listing the resistance genes to look for. Default: <code class="i">data/reference_genes.fasta</code>.</p>
+      <hr>
+      <h2>Command options</h2>
+      <div class="scroll"><table>
+        <tr><th>Option</th><th>What it does</th><th>Default</th></tr>
+        <tr><td><code class="i">-i path</code></td><td>Genome CSV to check</td><td>data/veterinary_amr_kmer_dataset.csv</td></tr>
+        <tr><td><code class="i">-r path</code></td><td>Reference gene FASTA</td><td>data/reference_genes.fasta</td></tr>
+        <tr><td><code class="i">-threads N</code></td><td>Number of threads</td><td>All available</td></tr>
+        <tr><td><code class="i">-b N</code></td><td>Repeat N times to measure speed</td><td>1</td></tr>
+        <tr><td><code class="i">-k N</code></td><td>Length of each DNA piece compared</td><td>21</td></tr>
+        <tr><td><code class="i">-t number</code></td><td>Share of a gene that must match to count as found</td><td>0.80 (80%)</td></tr>
+      </table></div>
+    </section>
+  </main>
+</div>
 
-        <!-- Chart 2: Execution Time Drop (SVG) -->
-        <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-xl p-6">
-          <h3 class="text-sm font-bold text-slate-200 mb-1">Execution Time Drop (Milliseconds)</h3>
-          <p class="text-xs text-slate-400 mb-4">Sequential Baseline: 26.41 ms vs. OpenMP 18 Cores: 4.80 ms</p>
-          <div class="relative w-full h-56">
-            <svg viewBox="0 0 500 220" class="w-full h-full overflow-visible">
-              <line x1="40" y1="20" x2="480" y2="20" stroke="#334155" stroke-dasharray="3,3" />
-              <line x1="40" y1="75" x2="480" y2="75" stroke="#334155" stroke-dasharray="3,3" />
-              <line x1="40" y1="130" x2="480" y2="130" stroke="#334155" stroke-dasharray="3,3" />
-              <line x1="40" y1="190" x2="480" y2="190" stroke="#475569" />
-              <text x="35" y="24" fill="#94a3b8" font-size="9" text-anchor="end">30ms</text>
-              <text x="35" y="134" fill="#94a3b8" font-size="9" text-anchor="end">10ms</text>
-              <text x="35" y="194" fill="#94a3b8" font-size="9" text-anchor="end">0ms</text>
-              <!-- Baseline dashed line -->
-              <line x1="40" y1="35" x2="480" y2="35" stroke="#ef4444" stroke-dasharray="4,4" stroke-width="1.5" />
-              <text x="420" y="30" fill="#ef4444" font-size="8">Seq Baseline (26.4 ms)</text>
-              <!-- Time Curve (Blue) -->
-              <path d="M 60 36 L 115 110 L 180 135 L 245 150 L 305 155 L 365 154 L 425 159 L 470 162"
-                    fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-              <!-- Dots -->
-              <circle cx="60" cy="36" r="4.5" fill="#3b82f6" />
-              <circle cx="115" cy="110" r="4.5" fill="#3b82f6" />
-              <circle cx="180" cy="135" r="4.5" fill="#3b82f6" />
-              <circle cx="245" cy="150" r="4.5" fill="#3b82f6" />
-              <circle cx="305" cy="155" r="4.5" fill="#3b82f6" />
-              <circle cx="365" cy="154" r="4.5" fill="#3b82f6" />
-              <circle cx="425" cy="159" r="4.5" fill="#3b82f6" />
-              <circle cx="470" cy="162" r="4.5" fill="#3b82f6" />
-              <!-- Labels -->
-              <text x="60" y="205" fill="#94a3b8" font-size="9" text-anchor="middle">1T</text>
-              <text x="115" y="205" fill="#94a3b8" font-size="9" text-anchor="middle">2T</text>
-              <text x="180" y="205" fill="#94a3b8" font-size="9" text-anchor="middle">4T</text>
-              <text x="245" y="205" fill="#94a3b8" font-size="9" text-anchor="middle">6T</text>
-              <text x="305" y="205" fill="#94a3b8" font-size="9" text-anchor="middle">8T</text>
-              <text x="365" y="205" fill="#94a3b8" font-size="9" text-anchor="middle">12T</text>
-              <text x="425" y="205" fill="#94a3b8" font-size="9" text-anchor="middle">16T</text>
-              <text x="470" y="205" fill="#94a3b8" font-size="9" text-anchor="middle">18T</text>
-            </svg>
-          </div>
-        </div>
-      </div>
-    </div>
+</div>
+<script>
+const K = 21, THRESHOLD = 0.8;
+const GENES = {
+  blaTEM: {seq: "ATGAGTATTCAACATTTCCGTGTCGCCCTGATTCCCTTTTTTGCGGCATTTTGCCTTCCTGTTTTTGCTCACCCAGAAACGCTGGTGAAAGTAAAAGATGCTGAAGATCAGTTGGGTGCACGAGTGGGTTACATCGAACTGGATCTCAACAGCGGTAAGATCCTTGAGAGTTTTCGCCCCGAAGAACGTTTTCCAATGATGAGCACTTTTAAAGTTCTGCTATGTGGCGCGGTATTATCCCGTGTTGACGCCGGGCAAGAGCAACTCGGTCGCCGCATACACTATTCTCAGAATGACTTGGTTGAGTACTCACCAGTCACAGAAAAGCATCTTACGGATGGCATGACAGTAAGAGAATTATGCAGTGCTGCCATAACCATGAGTGATAACACTGCGGCCAACTTACTTCTGACAACGATCGGAGGACCGAAGGAGCTAACCGCTTTTTTGCACAACATGGGGGATCATGTAACTCGCCTTGATCGTTGGGAACCGGAGCTGAATGAAGCCATACCAAACGACGAGCGTGACACCACGATGCCTGTAGCAATGGCAACAACGTTGCGCAAACTATTAACTGGCGAACTACTTACTCTAGCTTCCCGGCAACAATTAATAGACTGGATGGAGGCGGATAAAGTTGCAGGACCACTTCTGCGCTCGGCCCTTCCGGCTGGCTGGTTTATTGCTGATAAATCTGGAGCCGGTGAGCGTGGGTCTCGCGGTATCATTGCAGCACTGGGGCCAGATGGTAAGCCCTCCCGTATCGTAGTTATCTACACGACGGGGAGTCAGGCAACTATGGATGAACGAAATAGACAGATCGCTGAGATAGGTGCCTCACTGATTAAGCATTGGTAA", note: "penicillin-type antibiotics"},
+  tetA:   {seq: "ATGAAACCACTAATACTGCTGATTTTTTTCTTGGCGCTGATTTTGGCCTTTGTCCTTGCCAGTGTAAATGGTCTTTTACTGGTCGGCATCCTTGCTGCTCTGGCCGTTTTGGCAGTCGGTGTAGCTTACTTTGCCCACAAGAAGCCCAAAGAAACACGC",   note: "tetracycline antibiotics"},
+  sul1:   {seq: "ATGGTGACGGTGTTCGGCATTCTGAATCTCACCGAGGACTCCTTCTTCGATGAGAGCCGGCGGCATTTACAGGACGCTGAAGATCAGTTGGGTGCACGAGTGGGTTACATCGAACTGGATCTCAACAGCGGTAAGATCCTTGAGAGTTTTCGCCCCGAAG",   note: "sulfonamide (sulfa) antibiotics"}
+};
+const PRESETS = {blaTEM: GENES.blaTEM.seq, tetA: GENES.tetA.seq, sul1: GENES.sul1.seq, clean: "GGACATCGTGAAACCCCATGCGTTCAAGATTCTGATTATGCGCAGCGATTCAAGGGGTGAAGTGATGGTAAGCAGTTGAAGCTGGGAAGTCCGTACGGGCTCGCTGTTAGTTGATTCACGTTCGGGAGCATTACGTTTACCTGCCATGTTACGACCCCTGCGTTATACACCTTACGGC"};
+const $ = id => document.getElementById(id);
+const pieces = s => { const out = new Set(); for (let i = 0; i + K <= s.length; i++) out.add(s.substr(i, K)); return out; };
+for (const g of Object.values(GENES)) g.kmers = pieces(g.seq);
 
-    <!-- TAB 2: FULL BENCHMARK MATRIX TABLE -->
-    <div id="tab-comparison" class="hidden space-y-6">
-      <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-xl p-6">
-        <h3 class="text-base font-semibold text-white mb-1">Empirical Benchmark Matrix (All Dataset Sizes & Configurations)</h3>
-        <p class="text-xs text-slate-400 mb-4">Direct comparison of Sequential vs. Multi-core OpenMP speedups</p>
-        
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr class="border-b border-slate-700 text-slate-300 bg-slate-900/60">
-                <th class="p-3">Dataset File</th>
-                <th class="p-3">Genomes</th>
-                <th class="p-3">Sequential C</th>
-                <th class="p-3">OpenMP 1T</th>
-                <th class="p-3">OpenMP 4T</th>
-                <th class="p-3">OpenMP 8T</th>
-                <th class="p-3">OpenMP 16T</th>
-                <th class="p-3 text-emerald-400 font-bold">Peak Speedup</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-800 text-slate-200">
-              <tr>
-                <td class="p-3 font-mono text-slate-400">amr_100.csv</td>
-                <td class="p-3 font-semibold">100</td>
-                <td class="p-3">2.55 ms</td>
-                <td class="p-3">2.00 ms (1.27×)</td>
-                <td class="p-3 text-blue-400">1.20 ms (2.12×)</td>
-                <td class="p-3">1.40 ms (1.82×)</td>
-                <td class="p-3">1.40 ms (1.82×)</td>
-                <td class="p-3 text-emerald-400 font-bold">2.12× (4T)</td>
-              </tr>
-              <tr>
-                <td class="p-3 font-mono text-slate-400">amr_200.csv</td>
-                <td class="p-3 font-semibold">200</td>
-                <td class="p-3">4.81 ms</td>
-                <td class="p-3">5.70 ms (0.84×)</td>
-                <td class="p-3 text-blue-400">1.50 ms (3.21×)</td>
-                <td class="p-3">1.80 ms (2.67×)</td>
-                <td class="p-3">1.50 ms (3.21×)</td>
-                <td class="p-3 text-emerald-400 font-bold">3.21× (4T)</td>
-              </tr>
-              <tr>
-                <td class="p-3 font-mono text-slate-400">amr_400.csv</td>
-                <td class="p-3 font-semibold">400</td>
-                <td class="p-3">10.27 ms</td>
-                <td class="p-3">10.10 ms (1.02×)</td>
-                <td class="p-3">3.80 ms (2.70×)</td>
-                <td class="p-3 text-blue-400">2.50 ms (4.11×)</td>
-                <td class="p-3">2.40 ms (4.28×)</td>
-                <td class="p-3 text-emerald-400 font-bold">4.28× (16T)</td>
-              </tr>
-              <tr>
-                <td class="p-3 font-mono text-slate-400">amr_800.csv</td>
-                <td class="p-3 font-semibold">800</td>
-                <td class="p-3">20.39 ms</td>
-                <td class="p-3">21.00 ms (0.97×)</td>
-                <td class="p-3">8.20 ms (2.49×)</td>
-                <td class="p-3">4.50 ms (4.53×)</td>
-                <td class="p-3 text-blue-400">4.10 ms (4.97×)</td>
-                <td class="p-3 text-emerald-400 font-bold">4.97× (16T)</td>
-              </tr>
-              <tr class="bg-blue-950/20">
-                <td class="p-3 font-mono text-blue-300 font-bold">amr_1000.csv</td>
-                <td class="p-3 font-bold text-blue-200">1,000</td>
-                <td class="p-3 font-bold">24.94 ms</td>
-                <td class="p-3">27.80 ms (0.90×)</td>
-                <td class="p-3">7.50 ms (3.33×)</td>
-                <td class="p-3">6.30 ms (3.96×)</td>
-                <td class="p-3 text-emerald-400 font-bold">4.70 ms (5.31×)</td>
-                <td class="p-3 text-emerald-400 font-extrabold">5.50× (18T)</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+const clean = () => $('dna').value.toUpperCase().replace(/[^ACGT]/g, '');
+$('dna').addEventListener('input', () => { $('len').textContent = clean().length.toLocaleString() + ' letters entered'; });
 
-    <!-- TAB 3: INPUT GUIDE & SCHEMA EXPLANATION -->
-    <div id="tab-guide" class="hidden space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        <!-- Left: What are the Inputs? -->
-        <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-xl p-6 space-y-4">
-          <h3 class="text-base font-bold text-white flex items-center gap-2">
-            <span>📥</span> What Inputs Does the Program Take?
-          </h3>
-          
-          <div class="space-y-3 text-xs text-slate-300">
-            <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
-              <span class="font-bold text-blue-400 block mb-1">1. Query Genome Dataset (CSV file)</span>
-              <p class="text-slate-400 mb-2">Contains bacterial genomes to screen. Passed via <code class="text-emerald-400">-i &lt;path&gt;</code>.</p>
-              <div class="bg-slate-950 p-2 rounded font-mono text-[11px] text-slate-300">
-                sample_id,species,animal_source,amr_status,amr_gene,sequence,k<br>
-                ISOLATE_0001,E_coli,dog,susceptible,none,GGACATC...GTACC,21
-              </div>
-            </div>
+function loadPreset(key) { $('dna').value = PRESETS[key]; $('dna').dispatchEvent(new Event('input')); screen(); }
 
-            <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
-              <span class="font-bold text-emerald-400 block mb-1">2. Reference Genes Database (FASTA file)</span>
-              <p class="text-slate-400 mb-2">Contains target resistance genes. Passed via <code class="text-emerald-400">-r &lt;path&gt;</code> (default: <code class="text-slate-300">data/reference_genes.fasta</code>).</p>
-              <div class="bg-slate-950 p-2 rounded font-mono text-[11px] text-slate-300">
-                &gt;blaTEM length=224 k=21<br>
-                ATGAGTATTCAACATTTCCGTGTCGCCCTG...<br>
-                &gt;tetA length=154 k=21<br>
-                ATGAAACCACTAATACTGCTGATTTTTTTC...
-              </div>
-            </div>
-          </div>
-        </div>
+function screen() {
+  const seq = clean(), v = $('verdict');
+  if (seq.length < K) {
+    v.className = 'verdict err';
+    v.innerHTML = '<h3>Sequence too short</h3><p>Enter at least ' + K + ' letters of DNA (A, C, G, T) and try again.</p>';
+    return;
+  }
+  const mine = pieces(seq);
+  let best = null, bestShare = 0;
+  for (const [name, g] of Object.entries(GENES)) {
+    let hit = 0;
+    for (const p of g.kmers) if (mine.has(p)) hit++;
+    const share = hit / g.kmers.size;
+    if (share > bestShare) { bestShare = share; best = name; }
+  }
+  const pct = Math.round(bestShare * 100);
+  const bar = '<div class="meter"><i style="width:' + pct + '%"></i></div>';
+  if (bestShare >= THRESHOLD) {
+    v.className = 'verdict bad';
+    v.innerHTML = '<h3>Resistance gene found: ' + best + '</h3><p>This sequence contains ' + best + ', which makes bacteria resistant to ' + GENES[best].note + '.</p>' + bar + '<span class="small">' + pct + '% of the gene matched (80% is needed to count it as found).</span>';
+  } else {
+    v.className = 'verdict good';
+    v.innerHTML = '<h3>No resistance gene found</h3><p>None of the three genes matched closely enough.</p>' + bar + '<span class="small">Closest match: ' + pct + '% (80% is needed to count it as found).</span>';
+  }
+}
 
-        <!-- Right: Command-line Flags & Usage -->
-        <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-xl p-6 space-y-4">
-          <h3 class="text-base font-bold text-white flex items-center gap-2">
-            <span>💻</span> How to Provide Inputs on the Command Line
-          </h3>
+// Speed: time in ms to check 1,000 genomes
+const RUNS = [[1,26.5],[2,12.6],[4,8.7],[6,6.5],[8,5.8],[12,5.9],[16,5.3],[18,4.8]];
+$('bars').innerHTML = RUNS.map(([t, ms]) =>
+  '<div>' + t + (t === 1 ? ' thread' : ' threads') + '</div>' +
+  '<div class="track"><div class="fill' + (t === 1 ? ' base' : '') + '" style="width:' + (ms / 26.5 * 100) + '%"></div></div>' +
+  '<div class="val">' + ms.toFixed(1) + ' ms' + (t === 1 ? '' : ' (' + (26.5 / ms).toFixed(1) + '× faster)') + '</div>'
+).join('');
 
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr class="border-b border-slate-700 text-slate-400">
-                  <th class="py-2">Flag</th>
-                  <th class="py-2">Meaning</th>
-                  <th class="py-2">Default</th>
-                  <th class="py-2">Example</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-800 text-slate-300">
-                <tr><td class="py-2 font-mono text-emerald-400">-i &lt;path&gt;</td><td>Input CSV dataset</td><td>data/veterinary_...</td><td>-i data/scaled/amr_400.csv</td></tr>
-                <tr><td class="py-2 font-mono text-emerald-400">-r &lt;path&gt;</td><td>Reference FASTA</td><td>data/reference_...</td><td>-r data/reference_genes.fasta</td></tr>
-                <tr><td class="py-2 font-mono text-purple-400">-threads &lt;N&gt;</td><td>OpenMP CPU threads</td><td>System max (18)</td><td>-threads 8</td></tr>
-                <tr><td class="py-2 font-mono text-blue-400">-b &lt;N&gt;</td><td>Benchmark repetitions</td><td>1</td><td>-b 5</td></tr>
-                <tr><td class="py-2 font-mono text-slate-400">-k &lt;N&gt;</td><td>$k$-mer length</td><td>21</td><td>-k 21</td></tr>
-                <tr><td class="py-2 font-mono text-slate-400">-t &lt;float&gt;</td><td>Coverage threshold</td><td>0.80 (80%)</td><td>-t 0.80</td></tr>
-              </tbody>
-            </table>
-          </div>
+// Table: [genomes, one core, 4 threads, 8 threads, 16 threads] in ms
+const ROWS = [[100,2.55,1.2,1.4,1.4],[200,4.81,1.5,1.8,1.5],[400,10.27,3.8,2.5,2.8],[800,20.39,6.7,4.5,4.1],[1000,24.94,7.5,6.3,4.7]];
+$('tbl').innerHTML = '<tr><th>Genomes</th><th>One core</th><th>4 threads</th><th>8 threads</th><th>16 threads</th></tr>' +
+  ROWS.map(r => '<tr><td>' + r[0].toLocaleString() + '</td><td>' + r[1].toFixed(1) + ' ms</td>' +
+    r.slice(2).map(ms => '<td>' + ms.toFixed(1) + ' ms <small>' + (r[1] / ms).toFixed(1) + '×</small></td>').join('') + '</tr>').join('');
 
-          <div class="p-3 rounded-lg bg-blue-950/20 border border-blue-900/40 text-xs text-blue-300">
-            💡 <strong>Quick Run:</strong> Open PowerShell and run:<br>
-            <code class="text-white font-mono block mt-1">.\bin\kmer_openmp.exe -i data/scaled/amr_400.csv -threads 8 -b 5</code>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- TAB 4: LIVE DNA SCREENER SIMULATOR -->
-    <div id="tab-simulator" class="hidden space-y-6">
-      <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-xl p-6">
-        <h3 class="text-base font-semibold text-white mb-1">Interactive $k$-mer Screening Engine Simulator</h3>
-        <p class="text-xs text-slate-400 mb-4">
-          Select a real synthetic isolate from the dataset or paste arbitrary DNA to observe real-time $k$-mer matching ($k=21$).
-        </p>
-
-        <!-- Presets -->
-        <div class="flex flex-wrap items-center gap-2 mb-4">
-          <span class="text-xs text-slate-400">Load Preset Isolate:</span>
-          <button onclick="loadPreset('blaTEM')" class="px-2.5 py-1 text-xs font-medium rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
-            ISOLATE_0002 (blaTEM Resistant)
-          </button>
-          <button onclick="loadPreset('tetA')" class="px-2.5 py-1 text-xs font-medium rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
-            ISOLATE_0003 (tetA Resistant)
-          </button>
-          <button onclick="loadPreset('sul1')" class="px-2.5 py-1 text-xs font-medium rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
-            ISOLATE_0004 (sul1 Resistant)
-          </button>
-          <button onclick="loadPreset('susceptible')" class="px-2.5 py-1 text-xs font-medium rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
-            ISOLATE_0001 (Susceptible)
-          </button>
-        </div>
-
-        <div class="space-y-3">
-          <textarea id="dna-input" rows="4" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-blue-500" placeholder="Paste genomic sequence (A, C, G, T)..."></textarea>
-          <div class="flex justify-between items-center">
-            <span id="dna-len" class="text-xs text-slate-400">Sequence length: 0 bp | Window: k=21</span>
-            <button onclick="simulateScreening()" class="px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition">
-              Run $k$-mer Screen
-            </button>
-          </div>
-        </div>
-
-        <!-- Simulation Results Panel -->
-        <div id="sim-result" class="mt-6 border border-slate-800 rounded-xl p-4 bg-slate-900/60 hidden">
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Diagnostic Prediction Output</h4>
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="p-3 rounded-lg bg-slate-800/80">
-              <span class="text-xs text-slate-400 block">Status</span>
-              <span id="sim-status" class="text-lg font-bold"></span>
-            </div>
-            <div class="p-3 rounded-lg bg-slate-800/80">
-              <span class="text-xs text-slate-400 block">Identified Gene</span>
-              <span id="sim-gene" class="text-lg font-bold"></span>
-            </div>
-            <div class="p-3 rounded-lg bg-slate-800/80">
-              <span class="text-xs text-slate-400 block">Gene Coverage</span>
-              <span id="sim-coverage" class="text-lg font-bold"></span>
-            </div>
-            <div class="p-3 rounded-lg bg-slate-800/80">
-              <span class="text-xs text-slate-400 block">Total $k$-mer Lookups</span>
-              <span id="sim-lookups" class="text-lg font-bold font-mono"></span>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Client-side Interactive Engine & Benchmark Matrix Data -->
-  <script>
-    // Real Benchmark Data Matrix from results/benchmark_*.csv
-    const BENCHMARK_DATA = {
-      // Key: `${genomes}_${threads}`
-      seq: {
-        100: { time: 2.55, throughput: 39215 },
-        200: { time: 4.81, throughput: 41580 },
-        400: { time: 10.27, throughput: 38948 },
-        800: { time: 20.39, throughput: 39235 },
-        1000: { time: 24.94, throughput: 40096 }
-      },
-      omp: {
-        100: {
-          1: { time: 2.00, speedup: 1.27, eff: 127.0, throughput: 50000 },
-          4: { time: 1.20, speedup: 2.12, eff: 53.0, throughput: 83333 },
-          8: { time: 1.40, speedup: 1.82, eff: 22.8, throughput: 71428 },
-          16: { time: 1.40, speedup: 1.82, eff: 11.4, throughput: 71428 }
-        },
-        200: {
-          1: { time: 5.70, speedup: 0.84, eff: 84.0, throughput: 35087 },
-          4: { time: 1.50, speedup: 3.21, eff: 80.2, throughput: 133333 },
-          8: { time: 1.80, speedup: 2.67, eff: 33.4, throughput: 111111 },
-          16: { time: 1.50, speedup: 3.21, eff: 20.1, throughput: 133333 }
-        },
-        400: {
-          1: { time: 10.10, speedup: 1.02, eff: 102.0, throughput: 39603 },
-          4: { time: 3.80, speedup: 2.70, eff: 67.5, throughput: 105263 },
-          8: { time: 2.50, speedup: 4.11, eff: 51.4, throughput: 160000 },
-          16: { time: 2.40, speedup: 4.28, eff: 26.8, throughput: 166666 }
-        },
-        800: {
-          1: { time: 21.00, speedup: 0.97, eff: 97.0, throughput: 38095 },
-          4: { time: 8.20, speedup: 2.49, eff: 62.2, throughput: 97560 },
-          8: { time: 4.50, speedup: 4.53, eff: 56.6, throughput: 177777 },
-          16: { time: 4.10, speedup: 4.97, eff: 31.1, throughput: 195121 }
-        },
-        1000: {
-          1: { time: 26.50, speedup: 1.00, eff: 99.7, throughput: 37736 },
-          2: { time: 12.60, speedup: 2.10, eff: 104.8, throughput: 79365 },
-          4: { time: 8.70, speedup: 3.04, eff: 75.9, throughput: 114943 },
-          6: { time: 6.50, speedup: 4.06, eff: 67.7, throughput: 153846 },
-          8: { time: 5.80, speedup: 4.55, eff: 56.9, throughput: 172414 },
-          12: { time: 5.90, speedup: 4.48, eff: 37.3, throughput: 169492 },
-          16: { time: 5.30, speedup: 4.98, eff: 31.1, throughput: 188679 },
-          18: { time: 4.80, speedup: 5.50, eff: 30.6, throughput: 208334 }
-        }
-      }
-    };
-
-    // State Variables
-    let currentMode = 'omp';
-    let currentSize = 1000;
-    let currentThreads = 8;
-
-    function setMode(mode) {
-      currentMode = mode;
-      document.getElementById('mode-btn-seq').classList.toggle('active', mode === 'seq');
-      document.getElementById('mode-btn-omp').classList.toggle('active', mode === 'omp');
-      
-      const threadContainer = document.getElementById('thread-control-container');
-      if (mode === 'seq') {
-        threadContainer.classList.add('opacity-40', 'pointer-events-none');
-      } else {
-        threadContainer.classList.remove('opacity-40', 'pointer-events-none');
-      }
-      updateView();
-    }
-
-    function setSize(size) {
-      currentSize = size;
-      [100, 200, 400, 800, 1000].forEach(s => {
-        document.getElementById(`size-btn-${s}`).classList.toggle('active', s === size);
-      });
-      updateView();
-    }
-
-    function setThreads(th) {
-      currentThreads = th;
-      [1, 2, 4, 6, 8, 12, 16, 18].forEach(t => {
-        const btn = document.getElementById(`th-btn-${t}`);
-        if (btn) btn.classList.toggle('active', t === th);
-      });
-      document.getElementById('thread-count-label').innerText = `${th} Threads`;
-      updateView();
-    }
-
-    function updateView() {
-      const cmdEl = document.getElementById('generated-cmd');
-      const badgeEl = document.getElementById('out-badge');
-      const timeEl = document.getElementById('out-time');
-      const speedupEl = document.getElementById('out-speedup');
-      const effEl = document.getElementById('out-eff');
-      const genomesEl = document.getElementById('out-genomes');
-      const basesEl = document.getElementById('out-bases');
-      const lookupsEl = document.getElementById('out-lookups');
-      const tpEl = document.getElementById('out-throughput');
-
-      const csvName = `amr_${currentSize}.csv`;
-      const bases = (currentSize * 5000).toLocaleString();
-      const lookups = (currentSize * (5000 - 21 + 1)).toLocaleString();
-
-      genomesEl.innerText = currentSize.toLocaleString();
-      basesEl.innerText = `${bases} bp`;
-      lookupsEl.innerText = lookups;
-
-      if (currentMode === 'seq') {
-        cmdEl.innerText = `.\\bin\\kmer_sequential.exe -i data/scaled/${csvName} -b 5`;
-        badgeEl.innerText = "Sequential Baseline (1 Core)";
-        badgeEl.className = "text-[11px] px-2 py-0.5 rounded bg-slate-700 text-slate-300 font-semibold";
-
-        const val = BENCHMARK_DATA.seq[currentSize];
-        timeEl.innerText = val.time.toFixed(2);
-        speedupEl.innerText = "1.00×";
-        effEl.innerText = "100.0%";
-        tpEl.innerText = `${Math.round(val.throughput).toLocaleString()} gen/s`;
-      } else {
-        cmdEl.innerText = `.\\bin\\kmer_openmp.exe -i data/scaled/${csvName} -threads ${currentThreads} -b 5`;
-        badgeEl.innerText = `Parallel OpenMP (${currentThreads} Threads)`;
-        badgeEl.className = "text-[11px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-semibold";
-
-        // Query matrix
-        let ompEntry = BENCHMARK_DATA.omp[currentSize]?.[currentThreads];
-        if (!ompEntry) {
-          // Nearest fallback interpolation for visualization
-          const seqTime = BENCHMARK_DATA.seq[currentSize].time;
-          const speedupFactor = Math.min(currentThreads * 0.7, 5.5);
-          const estTime = seqTime / speedupFactor;
-          ompEntry = {
-            time: estTime,
-            speedup: speedupFactor,
-            eff: (speedupFactor / currentThreads) * 100,
-            throughput: (currentSize / (estTime / 1000))
-          };
-        }
-
-        timeEl.innerText = ompEntry.time.toFixed(2);
-        speedupEl.innerText = `${ompEntry.speedup.toFixed(2)}×`;
-        effEl.innerText = `${ompEntry.eff.toFixed(1)}%`;
-        tpEl.innerText = `${Math.round(ompEntry.throughput).toLocaleString()} gen/s`;
-      }
-    }
-
-    function copyCommand() {
-      const text = document.getElementById('generated-cmd').innerText;
-      navigator.clipboard.writeText(text);
-      alert("Command copied to clipboard!\n" + text);
-    }
-
-    // Tabs
-    function switchTab(tabId) {
-      ['threads', 'comparison', 'guide', 'simulator'].forEach(id => {
-        const tabEl = document.getElementById('tab-' + id);
-        const btnEl = document.getElementById('tab-btn-' + id);
-        if (id === tabId) {
-          tabEl.classList.remove('hidden');
-          btnEl.classList.add('active', 'bg-[var(--primary,#2563eb)]', 'text-white');
-          btnEl.classList.remove('text-[var(--muted-foreground,#94a3b8)]');
-        } else {
-          tabEl.classList.add('hidden');
-          btnEl.classList.remove('active', 'bg-[var(--primary,#2563eb)]', 'text-white');
-          btnEl.classList.add('text-[var(--muted-foreground,#94a3b8)]');
-        }
-      });
-    }
-
-    // DNA Simulator Preset Engine
-    const REF_GENES = {
-      blaTEM: {
-        name: "blaTEM",
-        seq: "ATGAGTATTCAACATTTCCGTGTCGCCCTGATTCCCTTTTTTGCGGCATTTTGCCTTCCTGTTTTTGCTCACCCAGAAACGCTGGTGAAAGTAAAAGATGCTGAAGATCAGTTGGGTGCACGAGTGGGTTACATCGAACTGGATCTCAACAGCGGTAAGATCCTTGAGAGTTTTCGCCCCGAAGAACGTTTTCCAATGATGAGCACTTTTAAAGTTCTGCTATGTGGCGCGGTATTATCCCGTGTTGACGCCGGGCAAGAGCAACTCGGTCGCCGCATACACTATTCTCAGAATGACTTGGTTGAGTACTCACCAGTCACAGAAAAGCATCTTACGGATGGCATGACAGTAAGAGAATTATGCAGTGCTGCCATAACCATGAGTGATAACACTGCGGCCAACTTACTTCTGACAACGATCGGAGGACCGAAGGAGCTAACCGCTTTTTTGCACAACATGGGGGATCATGTAACTCGCCTTGATCGTTGGGAACCGGAGCTGAATGAAGCCATACCAAACGACGAGCGTGACACCACGATGCCTGTAGCAATGGCAACAACGTTGCGCAAACTATTAACTGGCGAACTACTTACTCTAGCTTCCCGGCAACAATTAATAGACTGGATGGAGGCGGATAAAGTTGCAGGACCACTTCTGCGCTCGGCCCTTCCGGCTGGCTGGTTTATTGCTGATAAATCTGGAGCCGGTGAGCGTGGGTCTCGCGGTATCATTGCAGCACTGGGGCCAGATGGTAAGCCCTCCCGTATCGTAGTTATCTACACGACGGGGAGTCAGGCAACTATGGATGAACGAAATAGACAGATCGCTGAGATAGGTGCCTCACTGATTAAGCATTGGTAA",
-        kmers: new Set()
-      },
-      tetA: {
-        name: "tetA",
-        seq: "ATGAAACCACTAATACTGCTGATTTTTTTCTTGGCGCTGATTTTGGCCTTTGTCCTTGCCAGTGTAAATGGTCTTTTACTGGTCGGCATCCTTGCTGCTCTGGCCGTTTTGGCAGTCGGTGTAGCTTACTTTGCCCACAAGAAGCCCAAAGAAACACGC",
-        kmers: new Set()
-      },
-      sul1: {
-        name: "sul1",
-        seq: "ATGGTGACGGTGTTCGGCATTCTGAATCTCACCGAGGACTCCTTCTTCGATGAGAGCCGGCGGCATTTACAGGACGCTGAAGATCAGTTGGGTGCACGAGTGGGTTACATCGAACTGGATCTCAACAGCGGTAAGATCCTTGAGAGTTTTCGCCCCGAAG",
-        kmers: new Set()
-      }
-    };
-    const K = 21;
-    for (const [key, gene] of Object.entries(REF_GENES)) {
-      for (let i = 0; i <= gene.seq.length - K; i++) {
-        gene.kmers.add(gene.seq.substring(i, i + K).toUpperCase());
-      }
-    }
-
-    const PRESETS = {
-      blaTEM: REF_GENES.blaTEM.seq,
-      tetA: REF_GENES.tetA.seq,
-      sul1: REF_GENES.sul1.seq,
-      susceptible: "GGACATCGTGAAACCCCATGCGTTCAAGATTCTGATTATGCGCAGCGATTCAAGGGGTGAAGTGATGGTAAGCAGTTGAAGCTGGGAAGTCCGTACGGGCTCGCTGTTAGTTGATTCACGTTCGGGAGCATTACGTTTACCTGCCATGTTACGACCCCTGCGTTATACACCTTACGGC"
-    };
-
-    function loadPreset(key) {
-      document.getElementById('dna-input').value = PRESETS[key];
-      document.getElementById('dna-len').innerText = `Sequence length: ${PRESETS[key].length} bp | Window: k=21`;
-      simulateScreening();
-    }
-
-    function simulateScreening() {
-      const seq = document.getElementById('dna-input').value.trim().toUpperCase().replace(/[^ACGT]/g, '');
-      if (seq.length < K) {
-        alert(`Sequence must be at least ${K} bp long.`);
-        return;
-      }
-      document.getElementById('dna-len').innerText = `Sequence length: ${seq.length} bp | Total k-mers: ${seq.length - K + 1}`;
-
-      const seqKmers = new Set();
-      for (let i = 0; i <= seq.length - K; i++) {
-        seqKmers.add(seq.substring(i, i + K));
-      }
-
-      let bestGene = 'none';
-      let bestCov = 0.0;
-
-      for (const [key, gene] of Object.entries(REF_GENES)) {
-        let matches = 0;
-        for (const km of gene.kmers) {
-          if (seqKmers.has(km)) matches++;
-        }
-        const cov = matches / gene.kmers.size;
-        if (cov >= 0.80 && cov > bestCov) {
-          bestCov = cov;
-          bestGene = gene.name;
-        }
-      }
-
-      const panel = document.getElementById('sim-result');
-      panel.classList.remove('hidden');
-
-      const statusEl = document.getElementById('sim-status');
-      const geneEl = document.getElementById('sim-gene');
-      const covEl = document.getElementById('sim-coverage');
-      const lookupsEl = document.getElementById('sim-lookups');
-
-      if (bestGene !== 'none') {
-        statusEl.innerText = "RESISTANT";
-        statusEl.className = "text-lg font-bold text-red-400";
-        geneEl.innerText = bestGene;
-        geneEl.className = "text-lg font-bold text-amber-400";
-      } else {
-        statusEl.innerText = "SUSCEPTIBLE";
-        statusEl.className = "text-lg font-bold text-emerald-400";
-        geneEl.innerText = "None (Clean)";
-        geneEl.className = "text-lg font-bold text-slate-300";
-      }
-
-      covEl.innerText = `${(bestCov * 100).toFixed(1)}%`;
-      lookupsEl.innerText = `${(seq.length - K + 1).toLocaleString()} queries`;
-    }
-
-    // Initialize View
-    updateView();
-  </script>
+function cmd() { $('cmd').textContent = '.\\bin\\kmer_openmp.exe -i data/scaled/amr_' + $('sz').value + '.csv -threads ' + $('th').value + ' -b 5'; }
+function copyCmd(btn) {
+  navigator.clipboard.writeText($('cmd').textContent).then(() => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy', 1500); });
+}
+cmd();
+</script>
+<script>
+function tab(id){['check','speed','files'].forEach(x=>{document.getElementById('p-'+x).hidden=x!==id;document.getElementById('t-'+x).classList.toggle('on',x===id)})}
+</script>
 </body>
 </html>
