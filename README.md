@@ -1,4 +1,5 @@
 # Parallel $k$-mer-Based Screening of Synthetic Veterinary Bacterial Genomes for Antimicrobial-Resistance Genes using OpenMP
+---
 
 A high-performance, alignment-free genomic screening system implemented in **C** and parallelized with **OpenMP** to rapidly identify antimicrobial resistance (AMR) genes in veterinary bacterial genomes.
 Antimicrobial resistance (AMR) makes bacterial infections harder to treat and creates a need for 
@@ -20,8 +21,6 @@ gene, and this work is repeated for each genome in the dataset. As the number of
 increases, the execution time also increases. Since the screening of one genome does not depend 
 on the result of any other genome, parallel processing can be used to reduce the computation 
 time.
----
-
 ## 📂 Repository Structure
 
 ```
