@@ -97,11 +97,17 @@
 <div class="layout">
   <aside>
     <h2>Run it yourself</h2>
+    <div class="field"><label for="mode">Mode</label>
+      <select id="mode" onchange="modeChanged()">
+        <option value="parallel" selected>Parallel (OpenMP)</option>
+        <option value="sequential">Sequential (1 core)</option>
+      </select></div>
     <div class="field"><label for="sz">Genomes to check</label>
       <select id="sz" onchange="cmd()"><option>100</option><option>200</option><option>400</option><option>800</option><option selected>1000</option></select></div>
-    <div class="field"><label for="th">Threads</label>
+    <div class="field" id="th-field"><label for="th">Threads</label>
       <select id="th" onchange="cmd()"><option>1</option><option>2</option><option>4</option><option>6</option><option selected>8</option><option>12</option><option>16</option><option>18</option></select></div>
-    <div class="cmd"><code id="cmd"></code><button onclick="copyCmd(this)">Copy command</button></div>
+    <div class="cmd"><code id="cmd"></code><button onclick="copyCmd(this)">Copy</button></div>
+    <div id="cmd-stat" style="margin-top:8px;font-size:0.86rem;color:var(--good);font-weight:600"></div>
     <p class="note" style="margin-top:10px">Paste it into PowerShell from the project folder.</p>
     <hr>
     <p class="note"><b>Match:</b> the share of a gene's 21-letter DNA pieces found in your sequence. At 80% or more, the gene counts as present.</p>
@@ -244,7 +250,48 @@ $('bars').innerHTML = RUNS.map(([t, ms]) =>
 ).join('');
 
 
-function cmd() { $('cmd').textContent = '.\\bin\\kmer_openmp.exe -i data/scaled/amr_' + $('sz').value + '.csv -threads ' + $('th').value + ' -b 5'; }
+const D={
+  100:{seq:2.548,t:{1:2.0,2:1.6,4:1.2,6:1.3,8:1.4,12:1.4,16:1.4,18:1.4}},
+  200:{seq:4.811,t:{1:5.7,2:3.2,4:1.5,6:1.6,8:1.8,12:1.7,16:1.5,18:1.5}},
+  400:{seq:10.274,t:{1:10.1,2:5.8,4:3.8,6:3.0,8:2.5,12:2.6,16:2.8,18:2.8}},
+  800:{seq:20.394,t:{1:20.5,2:11.2,4:6.7,6:5.2,8:4.5,12:4.3,16:4.1,18:4.1}},
+  1000:{seq:24.944,t:{1:26.5,2:12.6,4:8.7,6:6.5,8:5.8,12:5.9,16:5.3,18:4.8}}
+};
+
+function modeChanged() {
+  const isSeq = $('mode').value === 'sequential';
+  $('th-field').style.display = isSeq ? 'none' : 'block';
+  cmd();
+}
+
+function cmd() {
+  const isSeq = $('mode').value === 'sequential';
+  const sz = $('sz').value;
+  const th = $('th').value;
+  const seqMs = D[sz] ? D[sz].seq : 24.9;
+
+  if (isSeq) {
+    $('cmd').textContent = '.\\bin\\kmer_sequential.exe -i data/scaled/amr_' + sz + '.csv -b 5';
+    //$('cmd-stat').innerHTML = '⏱ Expected runtime: ~' + seqMs.toFixed(1) + ' ms <span style="color:var(--muted);font-weight:normal">(single core baseline)</span>';
+  } else {
+    $('cmd').textContent = '.\\bin\\kmer_openmp.exe -i data/scaled/amr_' + sz + '.csv -threads ' + th + ' -b 5';
+    let ms = null;
+    if (sz === '1000') {
+      const match = RUNS.find(r => r[0] == th);
+      if (match) ms = match[1];
+    }
+    if (!ms && D[sz] && D[sz].t[th]) {
+      ms = D[sz].t[th];
+    }
+    if (ms) {
+      const speedup = (seqMs / ms).toFixed(1);
+      //$('cmd-stat').innerHTML = '⚡ Expected runtime: ~' + ms.toFixed(1) + ' ms <span style="color:var(--good)">(' + speedup + '× faster than sequential)</span>';
+    } else {
+      //$('cmd-stat').innerHTML = '⚡ Parallel OpenMP with ' + th + ' worker threads';
+    }
+  }
+}
+
 function copyCmd(btn) {
   navigator.clipboard.writeText($('cmd').textContent).then(() => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy', 1500); });
 }
@@ -253,7 +300,6 @@ cmd();
 <script>
 const g=id=>document.getElementById(id);
 function tab(id){['check','speed','graphs','files'].forEach(x=>{g('p-'+x).hidden=x!==id;g('t-'+x).classList.toggle('on',x===id)})}
-const D={100:{seq:2.548,t:{1:2.0,4:1.2,8:1.4,16:1.4}},200:{seq:4.811,t:{1:5.7,4:1.5,8:1.8,16:1.5}},400:{seq:10.274,t:{1:10.1,4:3.8,8:2.5,16:2.8}},800:{seq:20.394,t:{1:20.5,4:6.7,8:4.5,16:4.1}},1000:{seq:24.944,t:{1:27.8,4:7.5,8:6.3,16:4.7}}};
 const lab=t=>t+(t==1?' thread':' threads')+' (parallel)';
 function showSize(){
   const n=g('ds').value,d=D[n],rows=[['Sequential (1 core)',d.seq,true]].concat(Object.entries(d.t).map(([t,ms])=>[lab(t),ms,false])),max=Math.max(...rows.map(r=>r[1]));
