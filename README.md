@@ -1,7 +1,25 @@
 # Parallel $k$-mer-Based Screening of Synthetic Veterinary Bacterial Genomes for Antimicrobial-Resistance Genes using OpenMP
 
 A high-performance, alignment-free genomic screening system implemented in **C** and parallelized with **OpenMP** to rapidly identify antimicrobial resistance (AMR) genes in veterinary bacterial genomes.
-
+Antimicrobial resistance (AMR) makes bacterial infections harder to treat and creates a need for 
+efficient genome-based surveillance. A bacterial genome is a DNA sequence made of the bases 
+A, C, G and T, and an AMR gene is a sequence associated with resistance to an antimicrobial 
+drug. A genome can be screened by comparing it with known AMR reference genes to find 
+evidence that a particular resistance gene is present. 
+The problem statement for this project is to develop a computational system for processing large 
+genomic datasets to identify useful patterns, similarities or variations, and to investigate how 
+computational performance changes as the dataset size increases. In this project, the useful 
+pattern is the occurrence of k-mers belonging to known AMR reference genes in synthetic 
+veterinary bacterial genomes. 
+A k-mer is a substring of length k taken from a DNA sequence. The project uses k = 21 and three 
+reference genes: blaTEM, tetA and sul1. The proportion of a reference gene’s k-mers that are 
+found in a genome is the coverage of that gene. A genome is classified as resistant to a gene 
+when the coverage reaches the threshold of 0.80. 
+The major computational challenge is that every genome must be compared with every reference 
+gene, and this work is repeated for each genome in the dataset. As the number of genomes 
+increases, the execution time also increases. Since the screening of one genome does not depend 
+on the result of any other genome, parallel processing can be used to reduce the computation 
+time.
 ---
 
 ## 📂 Repository Structure
